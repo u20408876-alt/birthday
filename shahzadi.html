@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>A Little Journey 💖✨</title>
+
+  <!-- Google Fonts & Three.js Engine -->
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    :root {
+      --primary-rose: #ff0055;
+      --deep-crimson: #59001b;
+      --gold-accent: #ffd166;
+      --soft-pink: #ff85a1;
+      --glass-bg: rgba(18, 18, 18, 0.78);
+      --glass-border: rgba(255, 0, 85, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background: #05000a;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100dvh;
+      overflow: hidden;
+    }
+
+    #webgl-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .app-shell {
+      width: 100vw;
+      height: 100dvh;
+      max-width: 430px;
+      position: relative;
+      z-index: 2;
+      overflow: hidden;
+      background: radial-gradient(circle at center top, rgba(255, 0, 85, 0.5) 0%, rgba(5, 0, 10, 0.98) 100%);
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (min-width: 450px) {
+      .app-shell {
+        height: 860px;
+        border-radius: 44px;
+        border: 2px solid var(--glass-border);
+        box-shadow: 0 0 120px rgba(255, 0, 85, 0.75);
+      }
+    }
+
+    .page {
+      position: absolute;
+      inset: 0;
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(25px) scale(0.95);
+      transition: all 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 2;
+      overflow-y: auto;
+    }
+
+    .page.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+    }
+
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      padding: 22px 18px;
+      width: 100%;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+
+    h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 22px;
+      color: var(--gold-accent);
+      letter-spacing: 1px;
+      text-shadow: 0 0 15px rgba(255, 209, 102, 0.6);
+      margin-bottom: 6px;
+    }
+
+    .handwriting {
+      font-family: 'Caveat', cursive;
+      font-size: 24px;
+      color: var(--soft-pink);
+    }
+
+    p {
+      color: rgba(255, 255, 255, 0.92);
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+
+    /* Profile Box */
+    .profile-box {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      margin: 14px auto;
+      padding: 4px;
+      background: linear-gradient(135deg, var(--primary-rose), var(--gold-accent));
+      box-shadow: 0 0 35px rgba(255, 0, 85, 0.8);
+      overflow: hidden;
+    }
+
+    .profile-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    /* Large Side-Scroll Memory Gallery */
+    .slider-wrapper {
+      display: flex;
+      gap: 15px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding: 10px 5px 20px 5px;
+      width: 100%;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .slider-wrapper::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .slider-wrapper::-webkit-scrollbar-thumb {
+      background: var(--primary-rose);
+      border-radius: 10px;
+    }
+
+    .large-memory-card {
+      flex: 0 0 85%;
+      scroll-snap-align: center;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+      text-align: center;
+    }
+
+    .large-memory-card img {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 1px solid var(--gold-accent);
+      margin-bottom: 10px;
+    }
+
+    .btn-3d {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 22px;
+      background: linear-gradient(135deg, #ff0055 0%, #ff4081 100%);
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #800033, 0 12px 20px rgba(0, 0, 0, 0.5);
+      transition: all 0.15s ease;
+      position: relative;
+    }
+
+    .btn-3d:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #800033;
+    }
+
+    .btn-alt {
+      background: linear-gradient(135deg, #7209b7 0%, #3a0ca3 100%);
+      box-shadow: 0 6px 0 #240046, 0 12px 20px rgba(0,0,0,0.5);
+    }
+
+    .evasive {
+      position: absolute;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 100;
+    }
+
+    .envelope-card {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--primary-rose);
+      border-radius: 20px;
+      padding: 16px;
+      margin: 12px 0;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin: 15px 0;
+    }
+
+    .game-card {
+      aspect-ratio: 1;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .game-card.flipped {
+      background: rgba(255, 0, 85, 0.5);
+      transform: rotateY(180deg);
+    }
+
+    #catcherCanvas {
+      width: 100%;
+      height: 190px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 20px;
+      border: 1px solid var(--glass-border);
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="webgl-bg"></div>
+
+  <div class="app-shell">
+
+    <!-- PAGE 0: PROFILE PICTURE (NO EMOJI) -->
+    <div class="page active" id="page0">
+      <div style="margin: auto 0; width: 100%;">
+        <div class="glass-card">
+          <h1>For Someone Very Special 🌸✨</h1>
+          <p style="font-size:12px; color:#ff85a1;">"Tumhari ek smile mera poora din better kar deti hai... ❤️"</p>
+
+          <!-- Main Profile Image -->
+          <div class="profile-box">
+            <img src="memory1.jpg" alt="Profile Picture">
+          </div>
+
+          <p style="font-size:11px; color:#ffd166; margin-bottom:12px;">A little gift made with care 💖</p>
+          <button class="btn-3d" onclick="goPage(1)">Let’s Start This Journey 💖✨</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 1: PASSCODE -->
+    <div class="page" id="page1">
+      <div style="margin: auto 0; width: 100%;">
+        <div class="glass-card">
+          <h1>A Little Passcode 🔒</h1>
+          <p>Aage jane ke liye secret code enter karein… ❤️</p>
+          <input type="password" id="passCode" style="width:100%; padding:14px; border-radius:18px; border:1px solid var(--glass-border); background:rgba(0,0,0,0.6); color:#fff; font-size:22px; text-align:center; letter-spacing:5px; margin:15px 0; outline:none;" placeholder="••••" maxlength="4">
+          <button class="btn-3d" onclick="unlockApp()">Open Your Surprise 💖</button>
+          <p id="passErr" style="color:#ff4d6d; margin-top:8px; font-size:11px; display:none;">Hint: 2026 😉❤️</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 2: MEMORIES SECTION (LARGE PICS WITH SIDE SCROLL) -->
+    <div class="page" id="page2">
+      <div class="glass-card" style="margin-top: 5px;">
+        <h1>Favorite Memories 📸✨</h1>
+        <p style="font-size:11px; color:var(--soft-pink);">Swipe side-ways to see images 👈👉</p>
+        
+        <div class="slider-wrapper">
+          <!-- Memory 1 -->
+          <div class="large-memory-card">
+            <img src="memory1.jpg" alt="Mirror Selfie">
+            <p style="font-weight: 600; color: var(--gold-accent);">Mirror Selfie ✨</p>
+            <p style="font-size: 11px; color: #ddd; margin-top:4px;">A classic look with effortless grace.</p>
+          </div>
+
+          <!-- Memory 2 -->
+          <div class="large-memory-card">
+            <img src="memory2.jpg" alt="Cute Vibe">
+            <p style="font-weight: 600; color: var(--gold-accent);">Cute Vibe 💚</p>
+            <p style="font-size: 11px; color: #ddd; margin-top:4px;">Green outfit with the prettiest smile!</p>
+          </div>
+
+          <!-- Memory 3 -->
+          <div class="large-memory-card">
+            <img src="memory3.jpg" alt="Elegant Look">
+            <p style="font-weight: 600; color: var(--gold-accent);">Elegant Look 💜</p>
+            <p style="font-size: 11px; color: #ddd; margin-top:4px;">Traditional outfit and mehndi magic.</p>
+          </div>
+        </div>
+      </div>
+      <button class="btn-3d" style="margin-bottom: 5px;" onclick="goPage(3)">Something Sweet 🍫❤️</button>
+    </div>
+
+    <!-- PAGE 3: CHOCOLATES -->
+    <div class="page" id="page3">
+      <div class="glass-card" style="margin-top: 10px;">
+        <h1>Something Sweet For You 🍫❤️</h1>
+        <div style="font-size: 55px; margin: 10px 0;">🍫🍩🍬🍫</div>
+        <p>"A small sweet gesture to bring a sweet smile on your face. 🍫❤️"</p>
+      </div>
+      <div class="envelope-card">
+        <p class="handwriting">"Chocolate khatam ho jayegi, lekin tumhari smile hamesha rahegi. ❤️"</p>
+      </div>
+      <button class="btn-3d" style="margin-bottom: 10px;" onclick="goPage(4)">A Warm Hug 🧸❤️</button>
+    </div>
+
+    <!-- PAGE 4: TEDDY HUGS -->
+    <div class="page" id="page4">
+      <div class="glass-card" style="margin-top: 10px;">
+        <h1>A Hug For You 🧸</h1>
+        <div style="font-size: 55px; margin: 10px 0;">🧸💖🧸</div>
+        <p>Whenever you feel tired or lonely, remember there is someone who cares for you. 🧸❤️</p>
+      </div>
+      <div class="envelope-card">
+        <p class="handwriting">"Kuch moments ko words ki zaroorat nahi hoti… bas ek warm hug kaafi hota hai. 🧸❤️"</p>
+      </div>
+      <button class="btn-3d" style="margin-bottom: 10px;" onclick="goPage(5)">Flowers For You 💐</button>
+    </div>
+
+    <!-- PAGE 5: FLOWER GARDEN -->
+    <div class="page" id="page5">
+      <div class="glass-card" style="margin-top: 10px;">
+        <h1>A Bouquet For Someone Special 🌷</h1>
+        <div style="font-size: 50px; margin: 8px 0;">🌹🌷💐🌺</div>
+        <p style="margin-top: 8px;">Flowers to remind you how amazing and appreciated you are. 🌷❤️</p>
+      </div>
+      <button class="btn-3d" style="margin-bottom: 10px;" onclick="goPage(6)">A Few Promises 📜</button>
+    </div>
+
+    <!-- PAGE 6: PROMISES -->
+    <div class="page" id="page6">
+      <div class="glass-card" style="margin-top: 10px;">
+        <h1>Things I Want You To Know ❤️</h1>
+        <div class="envelope-card" onclick="nextPromise()">
+          <p id="promiseTitle" style="color:var(--gold-accent); font-weight:600;">Tap for a promise #1 💖</p>
+          <p id="promiseText" style="margin-top:8px; font-size:13px;">"Main hamesha tumhari respect aur care karunga. ❤️"</p>
+        </div>
+      </div>
+      <button class="btn-3d" style="margin-bottom: 10px;" onclick="goPage(7)">A Heartfelt Note 🥺</button>
+    </div>
+
+    <!-- PAGE 7: CONFESSION -->
+    <div class="page" id="page7">
+      <div class="glass-card" style="margin-top: 10px;">
+        <h1>From My Heart ❤️</h1>
+        <div class="envelope-card" onclick="toggleSecretNote()">
+          <p id="noteHeader" style="color:var(--gold-accent); font-weight:600;">💌 Tap to read a little note…</p>
+          <p id="noteBody" style="display:none; margin-top:10px; font-size:13px; line-height:1.7;">
+            "Tumhari smile aur tumhari baatein genuinely bohot pyaari hain. Main shayad har feeling perfect words mein express na kar paun, lekin tum mere liye bohot special ho. ❤️"
+          </p>
+        </div>
+      </div>
+      <button class="btn-3d" style="margin-bottom: 10px;" onclick="goPage(8)">A Little Game 🧩</button>
+    </div>
+
+    <!-- PAGE 8: GAME 1 -->
+    <div class="page" id="page8">
+      <div class="glass-card" style="margin-top: 10px;">
+        <h1>Game 1: Find The Pairs 🧩</h1>
+        <p>Find all the matching pairs. 💖</p>
+        <div class="game-grid" id="memoryGrid"></div>
+        <p id="game1Status" style="color:var(--gold-accent); font-weight:600; min-height:20px;"></p>
+      </div>
+      <button class="btn-3d" style="margin-bottom: 10px;" onclick="goPage(9)">Next: Catch Some Hearts 💖</button>
+    </div>
+
+    <!-- PAGE 9: GAME 2 -->
+    <div class="page" id="page9">
+      <div class="glass-card" style="margin-top: 10px;">
+        <h1>Game 2: Catch The Hearts 💖</h1>
+        <p>Catch 5 hearts! 💕</p>
+        <canvas id="catcherCanvas"></canvas>
+        <h3 id="scoreText" style="color:var(--gold-accent);">Score: 0 / 5</h3>
+      </div>
+      <button class="btn-3d" style="margin-bottom: 10px;" onclick="goPage(10)">One More Game 😊</button>
+    </div>
+
+    <!-- PAGE 10: GAME 3 -->
+    <div class="page" id="page10">
+      <div class="glass-card" style="margin-top: 10px;">
+        <h1>Game 3: Catch The Button 🍫</h1>
+        <p>Try to click the moving button! 😊</p>
+      </div>
+      <div style="width: 100%; height: 200px; position: relative; display: flex; justify-content: center; align-items: center;">
+        <button class="btn-3d evasive" id="tauntBtn" onmouseover="dodge(this)" ontouchstart="dodge(this)" onclick="goPage(11)">
+          Catch Me! 💖
+        </button>
+      </div>
+    </div>
+
+    <!-- PAGE 11: QUESTION -->
+    <div class="page" id="page11">
+      <div class="glass-card" style="margin-top: 15px;">
+        <h1>One Last Question… 🥺❤️</h1>
+        <p>Will you always stay this sweet? ✨</p>
+      </div>
+      <div style="width: 100%; height: 240px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">
+        <button class="btn-3d" style="width: 85%; z-index: 2;" onclick="goPage(12)">YES, ALWAYS! 💐❤️</button>
+        <button class="btn-3d btn-alt evasive" id="noBtn" style="width: 85%;" onmouseover="dodge(this)" ontouchstart="dodge(this)" onclick="goPage(13)">Try Again 😊</button>
+      </div>
+    </div>
+
+    <!-- PAGE 12: FINAL CELEBRATION -->
+    <div class="page" id="page12">
+      <div class="glass-card" style="margin: auto 0;">
+        <h1>Thank You For Being Wonderful! ❤️</h1>
+        <div style="font-size:60px; margin:15px 0;">💖💐🧸✨</div>
+        <p>Thank you for taking the time to go through this. I hope it brought a smile to your face. ❤️</p>
+        <button class="btn-3d" style="margin-top: 15px;" onclick="alert('Wishing you happiness and joy, always! ❤️')">One Small Note ✨</button>
+      </div>
+    </div>
+
+    <!-- PAGE 13: TRY AGAIN -->
+    <div class="page" id="page13">
+      <div class="glass-card" style="margin: auto 0;">
+        <h1>Let’s Try That Again 😊</h1>
+        <p>Give it another go! ❤️</p>
+        <button class="btn-3d" style="margin-top: 15px;" onclick="goPage(11)">Back To Question 🔄</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function goPage(num) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById('page' + num);
+      if(target) target.classList.add('active');
+
+      if(num === 8) initMemoryGame();
+      if(num === 9) startCatcherGame();
+    }
+
+    function unlockApp() {
+      const val = document.getElementById('passCode').value;
+      if(val === '2026') {
+        goPage(2);
+      } else {
+        const err = document.getElementById('passErr');
+        err.style.display = 'block';
+        setTimeout(() => { err.style.display = 'none'; }, 2000);
+      }
+    }
+
+    const promises = [
+      "Main hamesha tumhari respect aur care karunga. ❤️",
+      "Jab tumhara mood off ho, main patiently tumhein sununga. 🍫❤️",
+      "Tumhari khushi mere liye bohot important hai. ✨❤️",
+      "Main hamesha genuine aur supportive friend rehne ki koshish karunga. ❤️"
+    ];
+    let promiseIndex = 0;
+    function nextPromise() {
+      promiseIndex = (promiseIndex + 1) % promises.length;
+      document.getElementById('promiseTitle').innerText = `Promise #${promiseIndex + 1} 💖`;
+      document.getElementById('promiseText').innerText = `"${promises[promiseIndex]}"`;
+    }
+
+    function toggleSecretNote() {
+      const body = document.getElementById('noteBody');
+      const header = document.getElementById('noteHeader');
+      if (body.style.display === 'none') {
+        body.style.display = 'block';
+        header.innerText = '💌 From my heart:';
+      } else {
+        body.style.display = 'none';
+        header.innerText = '💌 Tap to read a little note…';
+      }
+    }
+
+    function dodge(btn) {
+      const x = (Math.random() - 0.5) * 220;
+      const y = (Math.random() - 0.5) * 220;
+      btn.style.transform = `translate(${x}px, ${y}px)`;
+    }
+
+    /* Game 1: Memory Match */
+    const icons = ['🍫', '🧸', '🌹', '💖', '🍫', '🧸', '🌹', '💖'];
+    let flippedCards = [];
+    let matchedPairs = 0;
+
+    function initMemoryGame() {
+      const grid = document.getElementById('memoryGrid');
+      grid.innerHTML = '';
+      flippedCards = [];
+      matchedPairs = 0;
+      document.getElementById('game1Status').innerText = '';
+      
+      const shuffled = [...icons].sort(() => Math.random() - 0.5);
+      shuffled.forEach((icon) => {
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.dataset.icon = icon;
+        card.onclick = () => flipMemoryCard(card);
+        grid.appendChild(card);
+      });
+    }
+
+    function flipMemoryCard(card) {
+      if (flippedCards.length < 2 && !card.classList.contains('flipped')) {
+        card.classList.add('flipped');
+        card.innerText = card.dataset.icon;
+        flippedCards.push(card);
+
+        if (flippedCards.length === 2) {
+          if (flippedCards[0].dataset.icon === flippedCards[1].dataset.icon) {
+            matchedPairs++;
+            flippedCards = [];
+            if (matchedPairs === 4) {
+              document.getElementById('game1Status').innerText = '🎉 You matched all of them! Great job! 💖';
+            }
+          } else {
+            setTimeout(() => {
+              flippedCards.forEach(c => {
+                c.classList.remove('flipped');
+                c.innerText = '';
+              });
+              flippedCards = [];
+            }, 800);
+          }
+        }
+      }
+    }
+
+    /* Game 2: Falling Hearts */
+    let catchScore = 0;
+    let catcherInterval;
+
+    function startCatcherGame() {
+      const canvas = document.getElementById('catcherCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+
+      catchScore = 0;
+      document.getElementById('scoreText').innerText = 'Score: 0 / 5';
+
+      let hearts = [];
+      for(let i = 0; i < 5; i++) {
+        hearts.push({
+          x: Math.random() * (canvas.width - 30) + 15,
+          y: Math.random() * -200,
+          speed: 1.5 + Math.random() * 2,
+          size: 24
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hearts.forEach(h => {
+          ctx.font = h.size + 'px serif';
+          ctx.fillText('💖', h.x, h.y);
+          h.y += h.speed;
+
+          if (h.y > canvas.height) {
+            h.y = -20;
+            h.x = Math.random() * (canvas.width - 30) + 15;
+          }
+        });
+      }
+
+      clearInterval(catcherInterval);
+      catcherInterval = setInterval(draw, 1000 / 60);
+
+      canvas.onclick = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+
+        hearts.forEach(h => {
+          if (Math.abs(clickX - h.x) < 30 && Math.abs(clickY - h.y) < 30) {
+            h.y = -20;
+            h.x = Math.random() * (canvas.width - 30) + 15;
+            catchScore++;
+            document.getElementById('scoreText').innerText = `Score: ${catchScore} / 5`;
+            if (catchScore >= 5) {
+              document.getElementById('scoreText').innerText = '🎉 Fantastic! You caught them all! ❤️';
+            }
+          }
+        });
+      };
+    }
+
+    /* Three.js Background Engine */
+    let scene, camera, renderer, particleSystem;
+
+    function initWebGL() {
+      const container = document.getElementById('webgl-bg');
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 5;
+
+      renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      const pCount = 280;
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(pCount * 3);
+
+      for(let i = 0; i < pCount * 3; i += 3) {
+        pos[i] = (Math.random() - 0.5) * 12;
+        pos[i+1] = (Math.random() - 0.5) * 12;
+        pos[i+2] = (Math.random() - 0.5) * 12;
+      }
+
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.PointsMaterial({
+        color: 0xff0055,
+        size: 0.085,
+        transparent: true,
+        opacity: 0.85
+      });
+
+      particleSystem = new THREE.Points(geo, mat);
+      scene.add(particleSystem);
+
+      animate();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      if(particleSystem) {
+        particleSystem.rotation.y += 0.0014;
+        particleSystem.rotation.x += 0.0007;
+      }
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    window.onload = function() {
+      initWebGL();
+    };
+  </script>
+</body>
+</html>
